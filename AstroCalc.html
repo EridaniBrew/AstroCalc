@@ -1,0 +1,253 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Astronomical Calculations</title>
+    <link rel="shortcut icon" href="images/AstroCalc.ico" type="image/x-icon" />
+    <link rel="icon" href="images/AstroCalcAnim.ico" type="image/x-icon">
+    <script src="suncalc.js"></script>
+
+    <script type="text/javascript">
+        var SHORTTIME = 1;
+        var LONGTIME = 2;
+
+        function FormatTime(theDate, longShort) {
+            // for sun functions, just need the time. For Moon, maybe need the day
+            var monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            var newDateObj = new Date(theDate.getTime() + 30000);    // add 30 seconds
+            h = newDateObj.getHours();
+            p = "AM";
+            if (h > 12) {
+                h -= 12;
+                p = "PM";
+            }
+            m = newDateObj.getMinutes();
+            if (m < 10) m = "0" + m;
+            var extra = "";
+            var s = h + ':' + m + " " + p;
+            if (longShort == LONGTIME) {
+                extra = " (" + monthName[newDateObj.getMonth()] + " " + newDateObj.getDate() + ")";
+                s = s + extra;
+            } 
+            return s
+        }
+
+        function MoonPhaseImage(phase) {
+            // phase is 0-100. Find the associated moon image name, from Moon04 to Moon100.
+            //  phase 0-4 should get Moon04
+            //        97-100 should get Moon100
+            // files are in folder MoonPhase, so net returned string is MoonPhase/Moon04.jpg
+            phaseNum = parseFloat(phase, 10) * 100;        // make phase a number
+            phaseNum = Math.floor((phaseNum + 4) / 4) * 4;    // convert to ranges 4,8,12,... 100
+            if (phaseNum < 10) phaseNum = "0" + phaseNum;      // leading zero
+            imgName = "MoonPhase/Moon" + phaseNum + ".jpg";
+            return imgName;
+        }
+
+        // Set up initial coordinates based on local location
+        function initGeolocation() {
+            if (navigator.geolocation) {
+                // Call getCurrentPosition with success and failure callbacks
+                navigator.geolocation.getCurrentPosition(successLocation, failLocation);
+            }
+            else {
+                alert("Sorry, your browser does not support geolocation services.");
+            }
+        }
+
+        function successLocation(position) {
+
+            dateForm.latitude.value = position.coords.latitude
+            dateForm.longitude.value = position.coords.longitude;
+        }
+
+        function failLocation() {
+            // Could not obtain location. Use my location
+            dateForm.longitude.value = -111.6;
+            dateForm.latitude.value = 38;  //33;
+        }
+        
+        function loadForm() {
+            //initGeolocation();
+
+            var today = new Date();
+            var dd = today.getDate();
+            var mm = today.getMonth() + 1; //January is 0!
+            var yyyy = today.getFullYear();
+
+            dateForm.pickMonth.value = mm;
+            dateForm.pickDay.value = dd;
+            dateForm.pickYear.value = yyyy;
+            
+            calcTime();
+        }
+
+
+        function calcTime() {
+            //alert("in calcTime");
+            dateStr = dateForm.pickMonth.value + "/" + dateForm.pickDay.value + "/" + dateForm.pickYear.value;
+            theDate = new Date(dateStr);
+            // if the moon does not rise this day, the moontimes.rise date is undefined.
+            // The rise time is the previous day, so re-run with prev day.
+            // If the moon does not set, it sets the next day. Re-run with the next day
+            var moontimes = SunCalc.getMoonTimes(theDate, dateForm.latitude.value, dateForm.longitude.value);
+            var riseTime = moontimes.rise;
+            var setTime = moontimes.set;
+            var riseTimeFmt = SHORTTIME;
+            var setTimeFmt = SHORTTIME;
+            if (riseTime == undefined) {
+                var otherDate = new Date(theDate);
+                otherDate.setDate(otherDate.getDate() - 1);   // get prev day
+                moontimes = SunCalc.getMoonTimes(otherDate, dateForm.latitude.value, dateForm.longitude.value);
+                riseTime = moontimes.rise;
+                riseTimeFmt = LONGTIME;
+            } 
+            if (setTime == undefined) {
+                var otherDate = new Date(theDate);
+                otherDate.setDate(otherDate.getDate() + 1);   // get next day
+                moontimes = SunCalc.getMoonTimes(otherDate, dateForm.latitude.value, dateForm.longitude.value);
+                setTime = moontimes.set;
+                setTimeFmt = LONGTIME;
+            }
+
+            //document.writeln("Moon rise " + moontimes.rise + "<br/>");
+            //document.writeln("Moon set " + moontimes.set + "<br/>");
+
+            var moonIll = SunCalc.getMoonIllumination(theDate);
+            //document.writeln("Moon fraction " + moonIll.fraction + "<br/>");
+            //document.writeln("Moon phase " + moonIll.phase + "<br/>");
+            //document.writeln("<br/>");
+
+            var suntimes = SunCalc.getTimes(theDate, dateForm.latitude.value, dateForm.longitude.value);
+            //document.writeln("Nautical dusk " + FormatTime(suntimes.nauticalDusk) + "<br/>");
+            //document.writeln("-->night? is AstroTwi " + FormatTime(suntimes.night) + "<br/>");
+            //document.writeln("-->night end? Astro Sunrise " + FormatTime(suntimes.nightEnd) + "<br/>");
+            //document.writeln("-->Sunrise " + FormatTime(suntimes.sunrise) + "<br/>");
+            //document.writeln("Sunrise end  " + FormatTime(suntimes.sunriseEnd) + "<br/>");
+            //document.writeln("Nautical Dawn / end Astro Twilight " + FormatTime(suntimes.nauticalDawn) + "<br/>");
+            //document.writeln("-->Sunset (same)" + FormatTime(suntimes.sunset) + "<br/>");
+            //document.writeln("Sunset start " + FormatTime(suntimes.sunsetStart) + "<br/>");
+            //document.writeln("Test pct 0.0333 " + MoonPhaseImage(0.0333) + "<br/>");
+            //document.writeln("Test pct 0.055 " + MoonPhaseImage(0.055) + "<br/>");
+            //document.writeln("Test pct 0.98 " + MoonPhaseImage(0.98) + "<br/>");
+            //document.writeln("Moon image <br/><img src='" + MoonPhaseImage(moonIll.phase) + "' </img><br/>");
+
+            dateForm.AstroTwi.value = FormatTime(suntimes.night, SHORTTIME);
+            dateForm.Sunset.value = FormatTime(suntimes.sunset, SHORTTIME);
+            dateForm.AstroSunrise.value = FormatTime(suntimes.nightEnd, SHORTTIME);
+            dateForm.Sunrise.value = FormatTime(suntimes.sunrise, SHORTTIME);
+
+            dateForm.MoonRise.value = FormatTime(riseTime, riseTimeFmt);
+            dateForm.MoonSet.value = FormatTime(setTime, setTimeFmt);
+
+            MoonImage.innerHTML = "<img src='" + MoonPhaseImage(moonIll.phase) + "' </img>";
+            
+        }
+
+    </script>
+</head>
+<body onload="loadForm()" >
+    
+        <form method="get" name="dateForm" action="" style="float:left">
+            <fieldset style="background-color:lightblue">
+                    <h2 style="text-align: center;">Astronomy Calculations &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version 1.1</h2>
+                <div style="background-color:mediumslateblue">
+                    <p >
+                        Select a date:<br>
+                        <select name="pickMonth" >
+                            <option selected>- - - - - - Select one - - - - - -</option>
+                            <option value="1">Jan</option>
+                            <option value="2">Feb</option>
+                            <option value="3">Mar</option>
+                            <option value="4">Apr</option>
+                            <option value="5">May</option>
+                            <option value="6">Jun</option>
+                            <option value="7">Jul</option>
+                            <option value="8">Aug</option>
+                            <option value="9">Sep</option>
+                            <option value="10">Oct</option>
+                            <option value="11">Nov</option>
+                            <option value="12">Dec</option>
+                        </select>
+                        <select name="pickDay">
+                            <option selected>- - - - - - Select one - - - - - -</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                            <option value="21">21</option>
+                            <option value="22">22</option>
+                            <option value="23">23</option>
+                            <option value="24">24</option>
+                            <option value="25">25</option>
+                            <option value="26">26</option>
+                            <option value="27">27</option>
+                            <option value="28">28</option>
+                            <option value="29">29</option>
+                            <option value="30">30</option>
+                            <option value="31">31</option>
+                        </select>
+                        <select name="pickYear">
+                            <option selected>- - - - - - Select one - - - - - -</option>
+                            <option value="2016">2016</option>
+                            <option value="2017">2017</option>
+                            <option value="2018">2018</option>
+                            <option value="2019">2019</option>
+                        </select>
+                    </p>
+                    <p>
+                        Lattitude:
+                        <input type="text" size="10" maxlength="50" name="latitude" value="33">
+                        Longitude:
+                        <input type="text" size="10" maxlength="50" name="longitude" value="-111.6">
+                        Time zone:
+                        <input type="text" size="10" maxlength="50" name="timeZone" value="-7">
+                    </p>
+                    <p style="text-align: center;">
+                        <input type="button" onclick="calcTime()" value="Calculate" style="text-align: center;"/>
+                    </p>
+                    </div>
+                    <table style="background-color:gold;font-size: 150%;">
+                        <tr>
+                            <td>Astronomical Twilight:</td>
+                            <td><input type="text" size="20" maxlength="50" name="AstroTwi"></td>
+                            <td>Sunset:</td>
+                            <td><input type="text" size="20" maxlength="50" name="Sunset"></td>
+                            <td rowspan="3"><span id="MoonImage">Moon image here</span></td>
+                        </tr>
+                        <tr>
+                            <td>Astronomical Sunrise:</td>
+                            <td><input type="text" size="20" maxlength="50" name="AstroSunrise"></td>
+                            <td>Sunrise:</td>
+                            <td><input type="text" size="20" maxlength="50" name="Sunrise"></td>
+                        </tr>
+                        <tr>
+                            <td>Moon rise:</td>
+                            <td><input type="text" size="20" maxlength="50" name="MoonRise"></td>
+                            <td>Moon Set:</td>
+                            <td><input type="text" size="20" maxlength="50" name="MoonSet"></td>
+                        </tr>
+                        <tr><td>&nbsp;</td></tr>
+                    </table>
+
+</fieldset>
+        </form>
+</body>
+</html>
