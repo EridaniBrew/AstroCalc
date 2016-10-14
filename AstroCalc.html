@@ -4,6 +4,9 @@
 <head>
     <meta charset="utf-8" />
     <title>Astronomical Calculations</title>
+    <!-- Version 1.1  Initial release
+         Version 1.2  Added the seeing widget
+        -->
     <link rel="shortcut icon" href="images/AstroCalc.ico" type="image/x-icon" />
     <link rel="icon" href="images/AstroCalcAnim.ico" type="image/x-icon">
     <script src="suncalc.js"></script>
@@ -148,10 +151,10 @@
     </script>
 </head>
 <body onload="loadForm()" >
-    
+
         <form method="get" name="dateForm" action="" style="float:left">
             <fieldset style="background-color:lightblue">
-                    <h2 style="text-align: center;">Astronomy Calculations &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version 1.1</h2>
+                    <h2 style="text-align: center;">Astronomy Calculations &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version 1.2</h2>
                 <div style="background-color:mediumslateblue">
                     <p >
                         Select a date:<br>
@@ -249,5 +252,12 @@
 
 </fieldset>
         </form>
+    <div style="clear: both;"></div>
+        <iframe src="https://www.meteoblue.com/en/weather/widget/seeing/32.943N-111.68E441_America%2FPhoenix?geoloc=fixed&noground=1" frameborder="0" scrolling="NO" allowtransparency="true" sandbox="allow-same-origin allow-scripts allow-popups" style="width: 520px;height: 754px; clear: both"></iframe>
+    <div>
+        <!-- DO NOT REMOVE THIS LINK -->
+        <a href="https://www.meteoblue.com/en/weather/forecast/seeing/32.943N-111.68E441_America%2FPhoenix?utm_source=weather_widget&utm_medium=linkus&utm_content=seeing&utm_campaign=Weather%2BWidget"
+           target="_blank">meteoblue</a>
+    </div>
 </body>
 </html>
